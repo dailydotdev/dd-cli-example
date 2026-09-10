@@ -1,0 +1,76 @@
+# dd — daily.dev from your terminal
+
+A tiny CLI for reading your [daily.dev](https://daily.dev) feed, built on the [public API](https://docs.daily.dev/public-api/). Human-readable by default, `--json` for your coding agent.
+
+This is the companion project for [Read daily.dev from your terminal](https://daily.dev/blog/daily-dev-from-your-terminal). The post walks through every file; this repo is the finished starting point.
+
+It deliberately stops at two commands. Everything else in the API follows the same pattern, and extending it is the point — see [Going further](#going-further).
+
+## Setup
+
+```bash
+pnpm install
+export DAILY_DEV_TOKEN="dda_your_token_here"
+```
+
+Generate a Personal Access Token at [daily.dev/settings/api](https://daily.dev/settings/api). It's shown once, so store it somewhere durable — a gitignored `.env`, your password manager, or your OS credential store.
+
+## Usage
+
+```bash
+pnpm dd feed              # your personalized For You feed
+pnpm dd popular           # what's trending platform-wide
+pnpm dd feed -n 5         # limit the number of posts (1-50)
+pnpm dd feed --json       # raw API response, for agents and pipes
+```
+
+Use `pnpm`, which forwards flags straight through. With npm you need `npm run dd -- feed -n 5`; without the `--` it swallows the flags and you silently get the defaults.
+
+## How it fits together
+
+| File | Responsibility |
+|---|---|
+| `src/schema.ts` | zod schemas for the API response and the CLI's own arguments |
+| `src/api.ts` | authenticated `fetch` (URL assembly, rate-limit errors), returning the untouched payload |
+| `src/utils.ts` | rendering posts for human eyes |
+| `src/dd.ts` | argument parsing, validation, and dispatch |
+
+Two details worth knowing before you extend it:
+
+- **`fetchFeed` returns `unknown` on purpose.** Validation happens only on the render path, so `--json` stays byte-for-byte what the API sent. Parse on the way through and zod's default behaviour strips every field your schema doesn't mention — `source`, `createdAt`, anything added later — which is exactly the data an agent wants.
+- **`parseArgs` handles mechanics, zod decides correctness.** A bad `--limit` fails with a readable message instead of an `undefined` three functions later.
+- **A `429` throws a `RateLimitError`.** It carries the API's own message plus `retryAfter` and `reset`, so a script or an agent can back off programmatically instead of parsing prose.
+
+## Rate limits
+
+The free tier allows 100 requests per day; [Plus](https://daily.dev/plus) raises it to 60 per minute. Every response carries `x-ratelimit-limit`, `x-ratelimit-remaining`, and `x-ratelimit-reset`, and a `429` adds `retry-after`. See the [API docs](https://docs.daily.dev/public-api/) for the current numbers.
+
+## Going further
+
+| Command | Endpoint | What's new about it |
+|---|---|---|
+| `dd tag <tag>` | `GET /feeds/tag/{tag}` | a second positional argument to validate |
+| `dd search <query>` | `GET /search/posts?q=` | URL-encoding a multi-word query |
+| `dd read <id>` | `GET /posts/{id}` | a single-post schema, with the AI summary |
+| `dd save <id>` | `POST /bookmarks/` | your first write — a request body and a method |
+| `dd saved` | `GET /bookmarks/` | pagination: follow `endCursor` until `hasNextPage` is false |
+
+Since your agent already knows how to run the tool, every command you add is a capability it picks up for free.
+
+## Letting an agent drive it
+
+```
+I have a CLI in this directory for reading daily.dev (my developer news
+feed). Run `pnpm dd feed` for my personalized feed and `pnpm dd popular`
+for what's trending. Add --json to any command for machine-readable
+output, and -n <count> to change how many posts come back.
+```
+
+Never send your token anywhere other than `api.daily.dev`.
+
+## Scripts
+
+```bash
+pnpm dd <command>   # run the CLI
+pnpm typecheck      # tsc --noEmit
+```

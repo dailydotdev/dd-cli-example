@@ -1,0 +1,19 @@
+{
+  "name": "dd-cli-example",
+  "version": "0.1.0",
+  "private": true,
+  "description": "A tiny daily.dev API CLI you and your coding agent can both drive",
+  "type": "module",
+  "scripts": {
+    "dd": "tsx src/dd.ts",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "zod": "^4.6.1"
+  },
+  "devDependencies": {
+    "@types/node": "^22.20.2",
+    "tsx": "^4.23.13",
+    "typescript": "^7.0.2"
+  }
+}
