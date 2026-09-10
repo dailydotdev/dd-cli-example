@@ -1,4 +1,4 @@
-import { headerNumber } from './schema.ts';
+import { headerNumber, pageSchema } from './schema.ts';
 
 const API = new URL('https://api.daily.dev/public/v1/');
 
@@ -34,6 +34,7 @@ const rateLimitError = async (res: Response) => {
 export const request = async (
   path: string,
   params: Record<string, string> = {},
+  init: RequestInit = {},
 ): Promise<unknown> => {
   const token = process.env.DAILY_DEV_TOKEN;
 
@@ -47,7 +48,8 @@ export const request = async (
   url.search = new URLSearchParams(params).toString();
 
   const res = await fetch(url, {
-    headers: { Authorization: `Bearer ${token}` },
+    ...init,
+    headers: { Authorization: `Bearer ${token}`, ...init.headers },
   });
 
   if (res.status === 429) {
@@ -58,6 +60,10 @@ export const request = async (
     throw new Error(`${res.status} ${res.statusText}: ${await res.text()}`);
   }
 
+  if (res.status === 204) {
+    return null;
+  }
+
   return res.json();
 };
 
@@ -66,3 +72,39 @@ export const fetchFeed = (path: string, limit: number) =>
 
 export const fetchComments = (postId: string, limit: number) =>
   request(`posts/${postId}/comments`, { limit: String(limit) });
+
+export const fetchBookmarks = async (pageSize: number, unreadOnly: boolean) => {
+  const data: unknown[] = [];
+  let cursor: string | null = null;
+
+  do {
+    const page = pageSchema.parse(
+      await request('bookmarks/', {
+        limit: String(pageSize),
+        ...(unreadOnly ? { unreadOnly: 'true' } : {}),
+        ...(cursor ? { cursor } : {}),
+      }),
+    );
+
+    data.push(...page.data);
+    cursor = page.pagination.hasNextPage
+      ? (page.pagination.endCursor ?? null)
+      : null;
+  } while (cursor);
+
+  return { data };
+};
+
+export const saveBookmark = (postId: string) =>
+  request(
+    'bookmarks/',
+    {},
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ postIds: [postId] }),
+    },
+  );
+
+export const removeBookmark = (postId: string) =>
+  request(`bookmarks/${postId}`, {}, { method: 'DELETE' });

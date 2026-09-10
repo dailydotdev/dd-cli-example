@@ -37,20 +37,34 @@ export const commentsSchema = z.object({
   }),
 });
 
+export const postsSchema = z.object({
+  data: z.array(postSchema),
+});
+
+export const pageSchema = z.object({
+  data: z.array(z.unknown()),
+  pagination: z.object({
+    hasNextPage: z.boolean(),
+    endCursor: z.string().nullish(),
+  }),
+});
+
 const limitArg = z.coerce.number().int().min(1).max(50);
 
 export const argsSchema = z.discriminatedUnion('command', [
   z.object({
-    command: z.literal('comments'),
-    target: z.string('comments needs a post id').min(1),
+    command: z.enum(['comments', 'save', 'unsave']),
+    target: z.string('this command needs a post id').min(1),
     limit: limitArg,
     json: z.boolean(),
+    unread: z.boolean(),
   }),
   z.object({
-    command: z.enum(['feed', 'popular', 'discussed']),
+    command: z.enum(['feed', 'popular', 'discussed', 'bookmarks']),
     target: z.string().nullable(),
     limit: limitArg,
     json: z.boolean(),
+    unread: z.boolean(),
   }),
 ]);
 

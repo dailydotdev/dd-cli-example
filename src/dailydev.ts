@@ -1,6 +1,17 @@
 import { parseArgs } from 'node:util';
-import { fetchComments, fetchFeed } from './api.ts';
-import { argsSchema, commentsSchema, feedSchema } from './schema.ts';
+import {
+  fetchBookmarks,
+  fetchComments,
+  fetchFeed,
+  removeBookmark,
+  saveBookmark,
+} from './api.ts';
+import {
+  argsSchema,
+  commentsSchema,
+  feedSchema,
+  postsSchema,
+} from './schema.ts';
 import { render, renderComments } from './utils.ts';
 
 const feeds = {
@@ -16,6 +27,7 @@ const main = async () => {
       options: {
         limit: { type: 'string', short: 'n', default: '10' },
         json: { type: 'boolean', default: false },
+        unread: { type: 'boolean', default: false },
       },
     });
 
@@ -24,6 +36,7 @@ const main = async () => {
       target: positionals[1] ?? null,
       limit: values.limit,
       json: values.json,
+      unread: values.unread,
     });
 
     if (result.error) {
@@ -33,6 +46,32 @@ const main = async () => {
     }
 
     const args = result.data;
+
+    if (args.command === 'save') {
+      await saveBookmark(args.target);
+      console.log(`Bookmarked ${args.target}`);
+
+      return;
+    }
+
+    if (args.command === 'unsave') {
+      await removeBookmark(args.target);
+      console.log(`Removed ${args.target}`);
+
+      return;
+    }
+
+    if (args.command === 'bookmarks') {
+      const bookmarks = await fetchBookmarks(args.limit, args.unread);
+
+      if (args.json) {
+        console.log(JSON.stringify(bookmarks, null, 2));
+      } else {
+        render(postsSchema.parse(bookmarks).data);
+      }
+
+      return;
+    }
 
     if (args.command === 'comments') {
       const comments = await fetchComments(args.target, args.limit);
