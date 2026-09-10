@@ -1,11 +1,13 @@
 import { parseArgs } from 'node:util';
 import { fetchFeed } from './api.ts';
+import { gatherBriefing } from './briefing.ts';
 import { argsSchema, feedSchema } from './schema.ts';
 import { render } from './utils.ts';
 
 const feeds = {
   feed: 'feeds/foryou',
   popular: 'feeds/popular',
+  discussed: 'feeds/discussed',
 };
 
 const main = async () => {
@@ -31,6 +33,13 @@ const main = async () => {
     }
 
     const { command, limit, json } = result.data;
+
+    if (command === 'briefing') {
+      console.log(JSON.stringify(await gatherBriefing(), null, 2));
+
+      return;
+    }
+
     const feed = await fetchFeed(feeds[command], limit);
 
     if (json) {
