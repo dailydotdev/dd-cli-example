@@ -49,7 +49,7 @@ Two details worth knowing before you extend it:
 
 - **`fetchFeed` returns `unknown` on purpose.** Validation happens only on the render path, so `--json` stays byte-for-byte what the API sent. Parse on the way through and zod's default behaviour strips every field your schema doesn't mention — `source`, `createdAt`, anything added later — which is exactly the data an agent wants.
 - **`parseArgs` handles mechanics, zod decides correctness.** A bad `--limit` fails with a readable message instead of an `undefined` three functions later.
-- **Grouping is local, saves are not.** Bookmarks live in daily.dev; `folders.json` maps a folder name to daily.dev post ids, so the file is a view over your library rather than a copy of it. daily.dev's own bookmark folders are a Plus feature, and this sidesteps that. Everything reads and writes through `readFolders`/`writeFolders`, so pointing the store at Firebase, Supabase, SQLite, or a KV store is a two-function change. Set `DAILYDEV_FOLDERS` to move the file.
+- **Grouping is local, saves are not.** Bookmarks live in daily.dev; `folders.json` maps a folder name to daily.dev post ids, so the file is a view over your library rather than a copy of it. daily.dev's own bookmark folders are a Plus feature, and this sidesteps that. The file lives at `~/.dailydev/folders.json` (override with `DAILYDEV_FOLDERS`), and everything reads and writes through `readFolders`/`writeFolders`, so pointing the store at Firebase, Supabase, SQLite, or a KV store is a two-function change.
 - **A `429` throws a `RateLimitError`.** It carries the API's own message plus `retryAfter` and `reset`, so a script or an agent can back off programmatically instead of parsing prose.
 
 ## Rate limits
