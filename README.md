@@ -59,7 +59,7 @@ The free tier allows 100 requests per day; [Plus](https://daily.dev/plus) raises
 | `dailydev read <id>` | `GET /posts/{id}` | a single-post schema, with the AI summary |
 | `dailydev search <query>` | `GET /search/posts?q=` | URL-encoding a multi-word query |
 | `dailydev search <query> --saved` | `GET /bookmarks/search?q=` | the same command against your own saves |
-| `dailydev folders` | `GET /bookmarks/lists` · `POST /bookmarks/lists` | bookmark folders (filing into one needs Plus) |
+| `dailydev tags` | `GET /tags` | the tags available to filter by |
 
 Since your agent already knows how to run the tool, every command you add is a capability it picks up for free.
 
