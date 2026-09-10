@@ -25,4 +25,12 @@ export const argsSchema = z.object({
   json: z.boolean(),
 });
 
+export const headerNumber = z
+  .string()
+  .min(1)
+  .transform(Number)
+  .pipe(z.number().int().nonnegative())
+  .nullable()
+  .catch(null);
+
 export type Post = z.infer<typeof postSchema>;

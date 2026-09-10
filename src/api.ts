@@ -1,3 +1,5 @@
+import { headerNumber } from './schema.ts';
+
 const API = new URL('https://api.daily.dev/public/v1/');
 
 export class RateLimitError extends Error {
@@ -12,16 +14,10 @@ export class RateLimitError extends Error {
   }
 }
 
-const toNumber = (value: string | null) => {
-  const parsed = Number(value);
-
-  return value === null || Number.isNaN(parsed) ? null : parsed;
-};
-
 const rateLimitError = async (res: Response) => {
   const body = (await res.json().catch(() => ({}))) as { message?: string };
-  const retryAfter = toNumber(res.headers.get('retry-after'));
-  const reset = toNumber(res.headers.get('x-ratelimit-reset'));
+  const retryAfter = headerNumber.parse(res.headers.get('retry-after'));
+  const reset = headerNumber.parse(res.headers.get('x-ratelimit-reset'));
 
   return new RateLimitError(
     [
