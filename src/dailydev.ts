@@ -3,7 +3,10 @@ import {
   fetchBookmarks,
   fetchComments,
   fetchFeed,
+  fetchFolders,
+  moveBookmark,
   removeBookmark,
+  resolveFolder,
   saveBookmark,
 } from './api.ts';
 import {
@@ -90,9 +93,46 @@ const main = async () => {
       return;
     }
 
+    if (args.command === 'folders') {
+      const folders = await fetchFolders();
+
+      if (args.json) {
+        console.log(JSON.stringify(folders, null, 2));
+      } else if (folders.length === 0) {
+        console.log('No folders. Bookmark folders need daily.dev Plus.');
+      } else {
+        for (const folder of folders) {
+          console.log(`${folder.icon ?? '📁'}\t${folder.name}\t${folder.id}`);
+        }
+      }
+
+      return;
+    }
+
     if (args.command === 'save') {
-      await saveBookmark(args.target);
-      console.log(`Bookmarked ${args.target}`);
+      const folder =
+        args.folder === null ? null : await resolveFolder(args.folder);
+
+      await saveBookmark(args.target, folder?.id ?? null);
+      console.log(
+        folder === null
+          ? `Bookmarked ${args.target}`
+          : `Bookmarked ${args.target} in ${folder.name}`,
+      );
+
+      return;
+    }
+
+    if (args.command === 'move') {
+      const folder =
+        args.folder === null ? null : await resolveFolder(args.folder);
+
+      await moveBookmark(args.target, folder?.id ?? null);
+      console.log(
+        folder === null
+          ? `Moved ${args.target} out of its folder`
+          : `Moved ${args.target} to ${folder.name}`,
+      );
 
       return;
     }
@@ -105,7 +145,20 @@ const main = async () => {
     }
 
     if (args.command === 'bookmarks') {
-      const bookmarks = await fetchBookmarks(args.limit, args.unread);
+      const folders = args.folder === null ? [] : await fetchFolders();
+      const folder = folders.find(({ name }) => name === args.folder);
+
+      if (args.folder !== null && !folder) {
+        throw new Error(
+          `No folder named ${args.folder}. Run 'folders' to see them.`,
+        );
+      }
+
+      const bookmarks = await fetchBookmarks(
+        args.limit,
+        args.unread,
+        folder?.id ?? null,
+      );
 
       if (args.json) {
         console.log(JSON.stringify(bookmarks, null, 2));

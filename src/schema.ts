@@ -49,6 +49,20 @@ export const pageSchema = z.object({
   }),
 });
 
+export const folderSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  icon: z.string().nullish(),
+});
+
+export const foldersSchema = z.object({
+  data: z.array(folderSchema),
+});
+
+export const createdFolderSchema = z.object({
+  data: folderSchema,
+});
+
 export const localBookmarksSchema = z.record(
   z.string(),
   z.array(z.string()),
@@ -58,7 +72,14 @@ const limitArg = z.coerce.number().int().min(1).max(50);
 
 export const argsSchema = z.discriminatedUnion('command', [
   z.object({
-    command: z.enum(['comments', 'save', 'unsave', 'file', 'unfile']),
+    command: z.enum([
+      'comments',
+      'save',
+      'unsave',
+      'file',
+      'unfile',
+      'move',
+    ]),
     target: z.string('this command needs a post id').min(1),
     folder: z.string().nullable(),
     limit: limitArg,
@@ -72,6 +93,7 @@ export const argsSchema = z.discriminatedUnion('command', [
       'discussed',
       'bookmarks',
       'local-bookmarks',
+      'folders',
     ]),
     target: z.string().nullable(),
     folder: z.string().nullable(),
@@ -92,3 +114,4 @@ export const headerNumber = z
 export type Post = z.infer<typeof postSchema>;
 export type Comment = z.infer<typeof commentSchema>;
 export type LocalBookmarks = z.infer<typeof localBookmarksSchema>;
+export type Folder = z.infer<typeof folderSchema>;

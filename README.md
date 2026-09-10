@@ -26,6 +26,10 @@ pnpm dailydev bookmarks         # your saved posts, every page of them
 pnpm dailydev bookmarks --unread  # only what you saved but never read
 pnpm dailydev save <id>         # bookmark a post
 pnpm dailydev unsave <id>       # remove a bookmark
+pnpm dailydev folders           # your daily.dev bookmark folders (Plus)
+pnpm dailydev save <id> -f "Rust async"   # save into a folder (Plus)
+pnpm dailydev move <id> -f "Rust async"   # move a saved post into one (Plus)
+pnpm dailydev bookmarks -f "Rust async"   # only that folder (Plus)
 pnpm dailydev local-bookmarks   # your local groups and their sizes
 pnpm dailydev file <id> -f "Rust async"   # group a bookmark locally
 pnpm dailydev unfile <id>       # ungroup it (add -f to target one group)
@@ -49,7 +53,8 @@ Two details worth knowing before you extend it:
 
 - **`fetchFeed` returns `unknown` on purpose.** Validation happens only on the render path, so `--json` stays byte-for-byte what the API sent. Parse on the way through and zod's default behaviour strips every field your schema doesn't mention — `source`, `createdAt`, anything added later — which is exactly the data an agent wants.
 - **`parseArgs` handles mechanics, zod decides correctness.** A bad `--limit` fails with a readable message instead of an `undefined` three functions later.
-- **Grouping is local, saves are not.** Bookmarks live in daily.dev; local bookmarks map a group name to daily.dev post ids, so the file is a view over your library rather than a copy of it. daily.dev's own bookmark folders are a Plus feature, and this sidesteps that — with Plus you'd point `file` at `PATCH /bookmarks/{id}` and get server-side folders synced across the apps instead. The file lives at `~/.dailydev/local-bookmarks.json` (override with `DAILYDEV_LOCAL_BOOKMARKS`), and everything reads and writes through `readLocalBookmarks`/`writeLocalBookmarks`, so pointing the store at Firebase, Supabase, SQLite, or a KV store is a two-function change.
+- **Grouping is local, saves are not.** Bookmarks live in daily.dev; local bookmarks map a group name to daily.dev post ids, so the file is a view over your library rather than a copy of it. daily.dev's own bookmark folders are a Plus feature, and this sidesteps that — with Plus, `folders`, `save -f`, `move -f` and `bookmarks -f` do the same job server-side, synced across the apps. The file lives at `~/.dailydev/local-bookmarks.json` (override with `DAILYDEV_LOCAL_BOOKMARKS`), and everything reads and writes through `readLocalBookmarks`/`writeLocalBookmarks`, so pointing the store at Firebase, Supabase, SQLite, or a KV store is a two-function change.
+- **Failed requests throw an `ApiError` carrying the status.** That's what lets `save -f` turn a `403` on folder creation into "folders need Plus, group it locally instead" rather than leaking a JSON body.
 - **A `429` throws a `RateLimitError`.** It carries the API's own message plus `retryAfter` and `reset`, so a script or an agent can back off programmatically instead of parsing prose.
 
 ## Rate limits

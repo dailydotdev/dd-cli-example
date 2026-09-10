@@ -1,6 +1,21 @@
-import { headerNumber, pageSchema } from './schema.ts';
+import {
+  createdFolderSchema,
+  foldersSchema,
+  headerNumber,
+  pageSchema,
+} from './schema.ts';
 
 const API = new URL('https://api.daily.dev/public/v1/');
+
+export class ApiError extends Error {
+  status: number;
+
+  constructor(status: number, message: string) {
+    super(message);
+    this.name = 'ApiError';
+    this.status = status;
+  }
+}
 
 export class RateLimitError extends Error {
   retryAfter: number | null;
@@ -57,7 +72,12 @@ export const request = async (
   }
 
   if (!res.ok) {
-    throw new Error(`${res.status} ${res.statusText}: ${await res.text()}`);
+    const body = (await res.json().catch(() => ({}))) as { message?: string };
+
+    throw new ApiError(
+      res.status,
+      body.message ?? `${res.status} ${res.statusText}`,
+    );
   }
 
   if (res.status === 204) {
@@ -73,7 +93,48 @@ export const fetchFeed = (path: string, limit: number) =>
 export const fetchComments = (postId: string, limit: number) =>
   request(`posts/${postId}/comments`, { limit: String(limit) });
 
-export const fetchBookmarks = async (pageSize: number, unreadOnly: boolean) => {
+export const fetchFolders = async () =>
+  foldersSchema.parse(await request('bookmarks/lists')).data;
+
+export const createFolder = async (name: string) =>
+  createdFolderSchema.parse(
+    await request(
+      'bookmarks/lists',
+      {},
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name }),
+      },
+    ),
+  ).data;
+
+export const resolveFolder = async (name: string) => {
+  const existing = await fetchFolders();
+  const found = existing.find((folder) => folder.name === name);
+
+  if (found) {
+    return found;
+  }
+
+  try {
+    return await createFolder(name);
+  } catch (error) {
+    if (error instanceof ApiError && error.status === 403) {
+      throw new Error(
+        `Bookmark folders need daily.dev Plus. Group it locally instead: file <id> -f "${name}"`,
+      );
+    }
+
+    throw error;
+  }
+};
+
+export const fetchBookmarks = async (
+  pageSize: number,
+  unreadOnly: boolean,
+  listId: string | null,
+) => {
   const data: unknown[] = [];
   let cursor: string | null = null;
 
@@ -82,6 +143,7 @@ export const fetchBookmarks = async (pageSize: number, unreadOnly: boolean) => {
       await request('bookmarks/', {
         limit: String(pageSize),
         ...(unreadOnly ? { unreadOnly: 'true' } : {}),
+        ...(listId ? { listId } : {}),
         ...(cursor ? { cursor } : {}),
       }),
     );
@@ -95,14 +157,25 @@ export const fetchBookmarks = async (pageSize: number, unreadOnly: boolean) => {
   return { data };
 };
 
-export const saveBookmark = (postId: string) =>
+export const saveBookmark = (postId: string, listId: string | null) =>
   request(
     'bookmarks/',
     {},
     {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ postIds: [postId] }),
+      body: JSON.stringify({ postIds: [postId], ...(listId ? { listId } : {}) }),
+    },
+  );
+
+export const moveBookmark = (postId: string, listId: string | null) =>
+  request(
+    `bookmarks/${postId}`,
+    {},
+    {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ listId }),
     },
   );
 
