@@ -1,12 +1,13 @@
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { homedir } from 'node:os';
 import { dirname, join } from 'node:path';
-import { foldersSchema, type Folders } from './schema.ts';
+import { localBookmarksSchema, type LocalBookmarks } from './schema.ts';
 
 const STORE =
-  process.env.DAILYDEV_FOLDERS ?? join(homedir(), '.dailydev', 'folders.json');
+  process.env.DAILYDEV_LOCAL_BOOKMARKS ??
+  join(homedir(), '.dailydev', 'local-bookmarks.json');
 
-export const readFolders = async (): Promise<Folders> => {
+export const readLocalBookmarks = async (): Promise<LocalBookmarks> => {
   const raw = await readFile(STORE, 'utf8').catch(
     (error: NodeJS.ErrnoException) => {
       if (error.code === 'ENOENT') {
@@ -17,32 +18,32 @@ export const readFolders = async (): Promise<Folders> => {
     },
   );
 
-  return raw === null ? {} : foldersSchema.parse(JSON.parse(raw));
+  return raw === null ? {} : localBookmarksSchema.parse(JSON.parse(raw));
 };
 
-export const writeFolders = async (folders: Folders) => {
+export const writeLocalBookmarks = async (folders: LocalBookmarks) => {
   await mkdir(dirname(STORE), { recursive: true });
   await writeFile(STORE, `${JSON.stringify(folders, null, 2)}\n`);
 };
 
 export const fileBookmark = async (postId: string, folder: string) => {
-  const folders = await readFolders();
+  const folders = await readLocalBookmarks();
   const current = folders[folder] ?? [];
 
   if (current.includes(postId)) {
     return false;
   }
 
-  await writeFolders({ ...folders, [folder]: [...current, postId] });
+  await writeLocalBookmarks({ ...folders, [folder]: [...current, postId] });
 
   return true;
 };
 
 export const unfileBookmark = async (postId: string, folder: string | null) => {
-  const folders = await readFolders();
+  const folders = await readLocalBookmarks();
   const names = folder === null ? Object.keys(folders) : [folder];
 
-  await writeFolders(
+  await writeLocalBookmarks(
     Object.fromEntries(
       Object.entries(folders)
         .map(([name, ids]): [string, string[]] => [

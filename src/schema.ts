@@ -49,7 +49,10 @@ export const pageSchema = z.object({
   }),
 });
 
-export const foldersSchema = z.record(z.string(), z.array(z.string()));
+export const localBookmarksSchema = z.record(
+  z.string(),
+  z.array(z.string()),
+);
 
 const limitArg = z.coerce.number().int().min(1).max(50);
 
@@ -63,7 +66,13 @@ export const argsSchema = z.discriminatedUnion('command', [
     unread: z.boolean(),
   }),
   z.object({
-    command: z.enum(['feed', 'popular', 'discussed', 'bookmarks', 'folders']),
+    command: z.enum([
+      'feed',
+      'popular',
+      'discussed',
+      'bookmarks',
+      'local-bookmarks',
+    ]),
     target: z.string().nullable(),
     folder: z.string().nullable(),
     limit: limitArg,
@@ -82,4 +91,4 @@ export const headerNumber = z
 
 export type Post = z.infer<typeof postSchema>;
 export type Comment = z.infer<typeof commentSchema>;
-export type Folders = z.infer<typeof foldersSchema>;
+export type LocalBookmarks = z.infer<typeof localBookmarksSchema>;

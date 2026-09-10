@@ -12,7 +12,11 @@ import {
   feedSchema,
   postsSchema,
 } from './schema.ts';
-import { fileBookmark, readFolders, unfileBookmark } from './store.ts';
+import {
+  fileBookmark,
+  readLocalBookmarks,
+  unfileBookmark,
+} from './store.ts';
 import { render, renderComments } from './utils.ts';
 
 const feeds = {
@@ -50,8 +54,8 @@ const main = async () => {
 
     const args = result.data;
 
-    if (args.command === 'folders') {
-      const folders = await readFolders();
+    if (args.command === 'local-bookmarks') {
+      const folders = await readLocalBookmarks();
 
       if (args.json) {
         console.log(JSON.stringify(folders, null, 2));
