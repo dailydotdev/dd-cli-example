@@ -4,7 +4,7 @@ A tiny CLI for reading your [daily.dev](https://daily.dev) feed, built on the [p
 
 This is the companion project for the daily.dev API series — [Read daily.dev from your terminal](https://daily.dev/blog/daily-dev-from-your-terminal) builds the CLI, and [Build your own morning briefing](https://daily.dev/blog/build-your-own-morning-briefing) and [Organize your daily.dev bookmarks from the terminal](https://daily.dev/blog/organize-your-bookmarks) add the briefing inputs and the bookmark commands. The posts quote the parts worth talking through; this repo holds the complete code.
 
-It deliberately stops at two commands. Everything else in the API follows the same pattern, and extending it is the point — see [Going further](#going-further).
+It covers a slice of the API, not all of it. Everything else follows the same pattern, and extending it is the point — see [Going further](#going-further).
 
 ## Setup
 
@@ -60,7 +60,7 @@ Use `pnpm`, which forwards flags straight through. With npm you need `npm run da
 
 Two details worth knowing before you extend it:
 
-- **`fetchFeed` returns `unknown` on purpose.** Validation happens only on the render path, so `--json` stays byte-for-byte what the API sent. Parse on the way through and zod's default behaviour strips every field your schema doesn't mention — `source`, `createdAt`, anything added later — which is exactly the data an agent wants.
+- **`fetchFeed` and `fetchBookmarks` return `unknown` on purpose.** Validation happens only on the render path, so `--json` stays byte-for-byte what the API sent. Parse on the way through and zod's default behaviour strips every field your schema doesn't mention — `source`, `createdAt`, anything added later — which is exactly the data an agent wants.
 - **`parseArgs` handles mechanics, zod decides correctness.** A bad `--limit` fails with a readable message instead of an `undefined` three functions later.
 - **Two namespaces, one set of actions.** `bookmarks` and `local-bookmarks` both take `list`, `folders`, `add`, `move` and `remove`, so switching sides means changing one word. daily.dev's bookmark folders need Plus; local bookmarks map a group name to daily.dev post ids, so the file is a view over your library rather than a copy of it. The file lives at `~/.dailydev/local-bookmarks.json` (override with `DAILYDEV_LOCAL_BOOKMARKS`), and everything reads and writes through `readLocalBookmarks`/`writeLocalBookmarks`, so pointing the store at Firebase, Supabase, SQLite, or a KV store is a two-function change.
 - **Failed requests throw an `ApiError` carrying the status.** That's what lets `save -f` turn a `403` on folder creation into "folders need Plus, group it locally instead" rather than leaking a JSON body.
@@ -68,7 +68,7 @@ Two details worth knowing before you extend it:
 
 ## Rate limits
 
-The free tier allows 100 requests per day; [Plus](https://daily.dev/plus) raises it to 60 per minute. Every response carries `x-ratelimit-limit`, `x-ratelimit-remaining`, and `x-ratelimit-reset`, and a `429` adds `retry-after`. See the [API docs](https://docs.daily.dev/public-api/) for the current numbers.
+Free accounts get 200 requests a month; [Plus](https://daily.dev/plus) is counted per minute instead. Nothing here hardcodes either number — every response carries `x-ratelimit-limit`, `x-ratelimit-remaining`, and `x-ratelimit-reset`, and a `429` adds `retry-after`, which is what `RateLimitError` reports. See the [API docs](https://docs.daily.dev/public-api/) for the current numbers.
 
 ## Going further
 
