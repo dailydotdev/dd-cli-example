@@ -12,6 +12,7 @@ import {
   feedSchema,
   postsSchema,
 } from './schema.ts';
+import { fileBookmark, readFolders, unfileBookmark } from './store.ts';
 import { render, renderComments } from './utils.ts';
 
 const feeds = {
@@ -28,6 +29,7 @@ const main = async () => {
         limit: { type: 'string', short: 'n', default: '10' },
         json: { type: 'boolean', default: false },
         unread: { type: 'boolean', default: false },
+        folder: { type: 'string', short: 'f' },
       },
     });
 
@@ -37,6 +39,7 @@ const main = async () => {
       limit: values.limit,
       json: values.json,
       unread: values.unread,
+      folder: values.folder ?? null,
     });
 
     if (result.error) {
@@ -46,6 +49,42 @@ const main = async () => {
     }
 
     const args = result.data;
+
+    if (args.command === 'folders') {
+      const folders = await readFolders();
+
+      if (args.json) {
+        console.log(JSON.stringify(folders, null, 2));
+      } else {
+        for (const [name, ids] of Object.entries(folders)) {
+          console.log(`${name}\t${ids.length} saved`);
+        }
+      }
+
+      return;
+    }
+
+    if (args.command === 'file') {
+      if (args.folder === null) {
+        throw new Error('file needs a folder: --folder "Rust async"');
+      }
+
+      const filed = await fileBookmark(args.target, args.folder);
+      console.log(
+        filed
+          ? `Filed ${args.target} under ${args.folder}`
+          : `${args.target} is already under ${args.folder}`,
+      );
+
+      return;
+    }
+
+    if (args.command === 'unfile') {
+      await unfileBookmark(args.target, args.folder);
+      console.log(`Removed ${args.target} from ${args.folder ?? 'all folders'}`);
+
+      return;
+    }
 
     if (args.command === 'save') {
       await saveBookmark(args.target);

@@ -49,19 +49,23 @@ export const pageSchema = z.object({
   }),
 });
 
+export const foldersSchema = z.record(z.string(), z.array(z.string()));
+
 const limitArg = z.coerce.number().int().min(1).max(50);
 
 export const argsSchema = z.discriminatedUnion('command', [
   z.object({
-    command: z.enum(['comments', 'save', 'unsave']),
+    command: z.enum(['comments', 'save', 'unsave', 'file', 'unfile']),
     target: z.string('this command needs a post id').min(1),
+    folder: z.string().nullable(),
     limit: limitArg,
     json: z.boolean(),
     unread: z.boolean(),
   }),
   z.object({
-    command: z.enum(['feed', 'popular', 'discussed', 'bookmarks']),
+    command: z.enum(['feed', 'popular', 'discussed', 'bookmarks', 'folders']),
     target: z.string().nullable(),
+    folder: z.string().nullable(),
     limit: limitArg,
     json: z.boolean(),
     unread: z.boolean(),
@@ -78,3 +82,4 @@ export const headerNumber = z
 
 export type Post = z.infer<typeof postSchema>;
 export type Comment = z.infer<typeof commentSchema>;
+export type Folders = z.infer<typeof foldersSchema>;

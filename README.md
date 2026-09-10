@@ -26,6 +26,9 @@ pnpm dailydev bookmarks         # your saved posts, every page of them
 pnpm dailydev bookmarks --unread  # only what you saved but never read
 pnpm dailydev save <id>         # bookmark a post
 pnpm dailydev unsave <id>       # remove a bookmark
+pnpm dailydev folders           # your local groups and their sizes
+pnpm dailydev file <id> -f "Rust async"   # group a bookmark locally
+pnpm dailydev unfile <id>       # ungroup it (add -f to target one folder)
 pnpm dailydev feed -n 5         # limit the number of results per page (1-50)
 pnpm dailydev feed --json       # raw API response, for agents and pipes
 ```
@@ -38,6 +41,7 @@ Use `pnpm`, which forwards flags straight through. With npm you need `npm run da
 |---|---|
 | `src/schema.ts` | zod schemas for the API response and the CLI's own arguments |
 | `src/api.ts` | authenticated `fetch` (URL assembly, rate-limit errors, pagination), returning the untouched payload |
+| `src/store.ts` | the local folder store — a JSON file of folder name to post ids |
 | `src/utils.ts` | rendering posts and comments for human eyes |
 | `src/dailydev.ts` | argument parsing, validation, and dispatch |
 
@@ -45,6 +49,7 @@ Two details worth knowing before you extend it:
 
 - **`fetchFeed` returns `unknown` on purpose.** Validation happens only on the render path, so `--json` stays byte-for-byte what the API sent. Parse on the way through and zod's default behaviour strips every field your schema doesn't mention — `source`, `createdAt`, anything added later — which is exactly the data an agent wants.
 - **`parseArgs` handles mechanics, zod decides correctness.** A bad `--limit` fails with a readable message instead of an `undefined` three functions later.
+- **Grouping is local, saves are not.** Bookmarks live in daily.dev; `folders.json` maps a folder name to daily.dev post ids, so the file is a view over your library rather than a copy of it. daily.dev's own bookmark folders are a Plus feature, and this sidesteps that. Everything reads and writes through `readFolders`/`writeFolders`, so pointing the store at Firebase, Supabase, SQLite, or a KV store is a two-function change. Set `DAILYDEV_FOLDERS` to move the file.
 - **A `429` throws a `RateLimitError`.** It carries the API's own message plus `retryAfter` and `reset`, so a script or an agent can back off programmatically instead of parsing prose.
 
 ## Rate limits
