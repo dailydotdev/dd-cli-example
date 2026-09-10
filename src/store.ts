@@ -26,6 +26,11 @@ export const writeLocalBookmarks = async (folders: LocalBookmarks) => {
   await writeFile(STORE, `${JSON.stringify(folders, null, 2)}\n`);
 };
 
+export const moveLocalBookmark = async (postId: string, folder: string) => {
+  await unfileBookmark(postId, null);
+  await fileBookmark(postId, folder);
+};
+
 export const fileBookmark = async (postId: string, folder: string) => {
   const folders = await readLocalBookmarks();
   const current = folders[folder] ?? [];

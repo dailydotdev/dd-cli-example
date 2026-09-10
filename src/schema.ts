@@ -70,37 +70,48 @@ export const localBookmarksSchema = z.record(
 
 const limitArg = z.coerce.number().int().min(1).max(50);
 
+const bookmarkArgs = {
+  action: z
+    .enum(['list', 'folders', 'add', 'remove', 'move'])
+    .nullable()
+    .transform((action) => action ?? 'list'),
+  target: z.string().nullable(),
+  folder: z.string().nullable(),
+  limit: limitArg,
+  json: z.boolean(),
+  unread: z.boolean(),
+};
+
+const needsTarget = new Set(['add', 'remove', 'move']);
+
 export const argsSchema = z.discriminatedUnion('command', [
   z.object({
-    command: z.enum([
-      'comments',
-      'save',
-      'unsave',
-      'file',
-      'unfile',
-      'move',
-    ]),
-    target: z.string('this command needs a post id').min(1),
-    folder: z.string().nullable(),
+    command: z.enum(['feed', 'popular', 'discussed']),
     limit: limitArg,
     json: z.boolean(),
-    unread: z.boolean(),
   }),
   z.object({
-    command: z.enum([
-      'feed',
-      'popular',
-      'discussed',
-      'bookmarks',
-      'local-bookmarks',
-      'folders',
-    ]),
-    target: z.string().nullable(),
-    folder: z.string().nullable(),
+    command: z.literal('comments'),
+    target: z.string('comments needs a post id').min(1),
     limit: limitArg,
     json: z.boolean(),
-    unread: z.boolean(),
   }),
+  z
+    .object({ command: z.enum(['bookmarks', 'local-bookmarks']), ...bookmarkArgs })
+    .refine((args) => !needsTarget.has(args.action) || args.target !== null, {
+      message: 'this action needs a post id',
+      path: ['target'],
+    })
+    .refine(
+      (args) =>
+        args.command === 'bookmarks' ||
+        !['add', 'move'].includes(args.action) ||
+        args.folder !== null,
+      {
+        message: 'local bookmarks need a folder: -f "<name>"',
+        path: ['folder'],
+      },
+    ),
 ]);
 
 export const headerNumber = z
