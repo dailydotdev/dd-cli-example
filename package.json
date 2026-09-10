@@ -5,7 +5,7 @@
   "description": "A tiny daily.dev API CLI you and your coding agent can both drive",
   "type": "module",
   "scripts": {
-    "dd": "tsx src/dd.ts",
+    "dailydev": "tsx src/dailydev.ts",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {

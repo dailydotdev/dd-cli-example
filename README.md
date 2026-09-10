@@ -1,4 +1,4 @@
-# dd — daily.dev from your terminal
+# dailydev — daily.dev from your terminal
 
 A tiny CLI for reading your [daily.dev](https://daily.dev) feed, built on the [public API](https://docs.daily.dev/public-api/). Human-readable by default, `--json` for your coding agent.
 
@@ -18,13 +18,13 @@ Generate a Personal Access Token at [daily.dev/settings/api](https://daily.dev/s
 ## Usage
 
 ```bash
-pnpm dd feed              # your personalized For You feed
-pnpm dd popular           # what's trending platform-wide
-pnpm dd feed -n 5         # limit the number of posts (1-50)
-pnpm dd feed --json       # raw API response, for agents and pipes
+pnpm dailydev feed              # your personalized For You feed
+pnpm dailydev popular           # what's trending platform-wide
+pnpm dailydev feed -n 5         # limit the number of posts (1-50)
+pnpm dailydev feed --json       # raw API response, for agents and pipes
 ```
 
-Use `pnpm`, which forwards flags straight through. With npm you need `npm run dd -- feed -n 5`; without the `--` it swallows the flags and you silently get the defaults.
+Use `pnpm`, which forwards flags straight through. With npm you need `npm run dailydev -- feed -n 5`; without the `--` it swallows the flags and you silently get the defaults.
 
 ## How it fits together
 
@@ -33,7 +33,7 @@ Use `pnpm`, which forwards flags straight through. With npm you need `npm run dd
 | `src/schema.ts` | zod schemas for the API response and the CLI's own arguments |
 | `src/api.ts` | authenticated `fetch` (URL assembly, rate-limit errors), returning the untouched payload |
 | `src/utils.ts` | rendering posts for human eyes |
-| `src/dd.ts` | argument parsing, validation, and dispatch |
+| `src/dailydev.ts` | argument parsing, validation, and dispatch |
 
 Two details worth knowing before you extend it:
 
@@ -49,11 +49,11 @@ The free tier allows 100 requests per day; [Plus](https://daily.dev/plus) raises
 
 | Command | Endpoint | What's new about it |
 |---|---|---|
-| `dd tag <tag>` | `GET /feeds/tag/{tag}` | a second positional argument to validate |
-| `dd search <query>` | `GET /search/posts?q=` | URL-encoding a multi-word query |
-| `dd read <id>` | `GET /posts/{id}` | a single-post schema, with the AI summary |
-| `dd save <id>` | `POST /bookmarks/` | your first write — a request body and a method |
-| `dd saved` | `GET /bookmarks/` | pagination: follow `endCursor` until `hasNextPage` is false |
+| `dailydev tag <tag>` | `GET /feeds/tag/{tag}` | a second positional argument to validate |
+| `dailydev search <query>` | `GET /search/posts?q=` | URL-encoding a multi-word query |
+| `dailydev read <id>` | `GET /posts/{id}` | a single-post schema, with the AI summary |
+| `dailydev save <id>` | `POST /bookmarks/` | your first write — a request body and a method |
+| `dailydev saved` | `GET /bookmarks/` | pagination: follow `endCursor` until `hasNextPage` is false |
 
 Since your agent already knows how to run the tool, every command you add is a capability it picks up for free.
 
@@ -61,7 +61,7 @@ Since your agent already knows how to run the tool, every command you add is a c
 
 ```
 I have a CLI in this directory for reading daily.dev (my developer news
-feed). Run `pnpm dd feed` for my personalized feed and `pnpm dd popular`
+feed). Run `pnpm dailydev feed` for my personalized feed and `pnpm dailydev popular`
 for what's trending. Add --json to any command for machine-readable
 output, and -n <count> to change how many posts come back.
 ```
@@ -71,6 +71,6 @@ Never send your token anywhere other than `api.daily.dev`.
 ## Scripts
 
 ```bash
-pnpm dd <command>   # run the CLI
+pnpm dailydev <command>   # run the CLI
 pnpm typecheck      # tsc --noEmit
 ```
