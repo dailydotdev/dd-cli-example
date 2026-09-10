@@ -63,3 +63,6 @@ export const request = async (
 
 export const fetchFeed = (path: string, limit: number) =>
   request(path, { limit: String(limit) });
+
+export const fetchComments = (postId: string, limit: number) =>
+  request(`posts/${postId}/comments`, { limit: String(limit) });

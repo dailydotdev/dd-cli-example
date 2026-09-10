@@ -1,8 +1,7 @@
 import { parseArgs } from 'node:util';
-import { fetchFeed } from './api.ts';
-import { gatherBriefing } from './briefing.ts';
-import { argsSchema, feedSchema } from './schema.ts';
-import { render } from './utils.ts';
+import { fetchComments, fetchFeed } from './api.ts';
+import { argsSchema, commentsSchema, feedSchema } from './schema.ts';
+import { render, renderComments } from './utils.ts';
 
 const feeds = {
   feed: 'feeds/foryou',
@@ -22,6 +21,7 @@ const main = async () => {
 
     const result = argsSchema.safeParse({
       command: positionals[0] ?? 'feed',
+      target: positionals[1] ?? null,
       limit: values.limit,
       json: values.json,
     });
@@ -32,14 +32,21 @@ const main = async () => {
       );
     }
 
-    const { command, limit, json } = result.data;
+    const args = result.data;
 
-    if (command === 'briefing') {
-      console.log(JSON.stringify(await gatherBriefing(), null, 2));
+    if (args.command === 'comments') {
+      const comments = await fetchComments(args.target, args.limit);
+
+      if (args.json) {
+        console.log(JSON.stringify(comments, null, 2));
+      } else {
+        renderComments(commentsSchema.parse(comments).data);
+      }
 
       return;
     }
 
+    const { command, limit, json } = args;
     const feed = await fetchFeed(feeds[command], limit);
 
     if (json) {

@@ -2,7 +2,7 @@
 
 A tiny CLI for reading your [daily.dev](https://daily.dev) feed, built on the [public API](https://docs.daily.dev/public-api/). Human-readable by default, `--json` for your coding agent.
 
-This is the companion project for the daily.dev API series — [Read daily.dev from your terminal](https://daily.dev/blog/daily-dev-from-your-terminal) builds the CLI, and [Build your own morning briefing](https://daily.dev/blog/build-your-own-morning-briefing) adds the `briefing` command. The posts quote the parts worth talking through; this repo holds the complete code.
+This is the companion project for the daily.dev API series — [Read daily.dev from your terminal](https://daily.dev/blog/daily-dev-from-your-terminal) builds the CLI, and [Build your own morning briefing](https://daily.dev/blog/build-your-own-morning-briefing) feeds its output into a scheduled agent. The posts quote the parts worth talking through; this repo holds the complete code.
 
 It deliberately stops at two commands. Everything else in the API follows the same pattern, and extending it is the point — see [Going further](#going-further).
 
@@ -21,9 +21,9 @@ Generate a Personal Access Token at [daily.dev/settings/api](https://daily.dev/s
 pnpm dailydev feed              # your personalized For You feed
 pnpm dailydev popular           # what's trending platform-wide
 pnpm dailydev discussed         # posts with the most active discussions
-pnpm dailydev feed -n 5         # limit the number of posts (1-50)
+pnpm dailydev comments <id>     # the comment thread on a post
+pnpm dailydev feed -n 5         # limit the number of results (1-50)
 pnpm dailydev feed --json       # raw API response, for agents and pipes
-pnpm dailydev briefing          # feeds + hottest comment threads as one JSON document
 ```
 
 Use `pnpm`, which forwards flags straight through. With npm you need `npm run dailydev -- feed -n 5`; without the `--` it swallows the flags and you silently get the defaults.
@@ -34,8 +34,7 @@ Use `pnpm`, which forwards flags straight through. With npm you need `npm run da
 |---|---|
 | `src/schema.ts` | zod schemas for the API response and the CLI's own arguments |
 | `src/api.ts` | authenticated `fetch` (URL assembly, rate-limit errors), returning the untouched payload |
-| `src/utils.ts` | rendering posts for human eyes |
-| `src/briefing.ts` | gathers feeds plus the hottest comment threads for a morning briefing |
+| `src/utils.ts` | rendering posts and comments for human eyes |
 | `src/dailydev.ts` | argument parsing, validation, and dispatch |
 
 Two details worth knowing before you extend it:

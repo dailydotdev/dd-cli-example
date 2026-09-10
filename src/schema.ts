@@ -37,11 +37,22 @@ export const commentsSchema = z.object({
   }),
 });
 
-export const argsSchema = z.object({
-  command: z.enum(['feed', 'popular', 'discussed', 'briefing']),
-  limit: z.coerce.number().int().min(1).max(50),
-  json: z.boolean(),
-});
+const limitArg = z.coerce.number().int().min(1).max(50);
+
+export const argsSchema = z.discriminatedUnion('command', [
+  z.object({
+    command: z.literal('comments'),
+    target: z.string('comments needs a post id').min(1),
+    limit: limitArg,
+    json: z.boolean(),
+  }),
+  z.object({
+    command: z.enum(['feed', 'popular', 'discussed']),
+    target: z.string().nullable(),
+    limit: limitArg,
+    json: z.boolean(),
+  }),
+]);
 
 export const headerNumber = z
   .string()
